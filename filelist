@@ -1,0 +1,8 @@
+return {
+  "startup",
+  "gui",
+  "config",
+  "apis/Reloaded",
+  "menu/shutdown",
+  "menu/restart",
+}
