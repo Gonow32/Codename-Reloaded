@@ -1,0 +1,110 @@
+--Codename Reloaded GUI
+--Written by Gonow32
+--For use in the Codename Reloaded system
+
+function clearScr()
+  term.clear()
+  term.setCursorPos(1,1)
+end
+
+local menuItems = {}
+local config = Reloaded.GetConfigurationFile()
+local DisplayModes = Reloaded.GetDisplayModeList()
+local CurrentMenuOption = 1
+local w, h = term.getSize()
+
+if fs.isDir("/menu") then
+  for i,v in pairs(fs.list("/menu")) do
+    local ok, returned = pcall(dofile, "/menu/"..v)
+    if not ok then
+      printError("Could not load menu item: "..v)
+    else
+      if returned then
+        if type(returned) == "table" then
+          menuItems[i] = returned
+          print("Loaded "..v)
+        end
+      end
+    end
+  end
+end
+
+function drawGUI()
+  local displayMode = Reloaded.GetDisplayMode()
+  local monochrome = false
+  
+  if displayMode == DisplayModes.MonochromeMode or displayMode == DisplayModes.MonochromeMonitorMode then
+    monochrome = true
+  end
+  
+  if displayMode == DisplayModes.ComputerMode then
+    term.current().setVisible(false)
+  end
+  
+  term.setBackgroundColour(colours.white)
+  clearScr()
+  
+  if not monochrome then
+    local ok, image = pcall(paintutils.loadImage, config.sBackground)
+    if ok then
+      if image then
+        paintutils.drawImage(image, 11, 1)
+      end
+    end
+  end
+  term.setBackgroundColour(config.nMainColour)
+  term.setCursorPos(1, 1)
+  for i = 1, h do
+    term.setCursorPos(1, i)
+    term.write(string.rep(" ", 10))
+  end
+  for i,v in pairs(menuItems) do
+    term.setCursorPos(1, i)
+    if monochrome then
+      if CurrentMenuOption == i then
+        term.write("["..v.sName.."]")
+      else
+        term.write(" "..v.sName.." ")
+      end
+    else
+      term.write(" "..v.sName.." ")
+    end
+  end
+  
+  if displayMode == DisplayModes.ComputerMode then
+    term.current().setVisible(true)
+  end
+end
+
+local DisplayModes = Reloaded.GetDisplayModeList()
+local displayMode = Reloaded.GetDisplayMode()
+
+while true do
+  drawGUI()
+  local e = {os.pullEvent()}
+  if e[1] == "mouse_click" or e[1] == "monitor_touch" then
+    if e[3] >= 2 and e[3] <= 9 then
+      if menuItems[e[4]] then
+        pcall(menuItems[e[4]].fFunction)
+      end
+    end
+  elseif e[1] == "key" then
+    if e[2] == keys.up then
+      if CurrentMenuOption == 1 then
+        CurrentMenuOption = #menuItems
+      else
+        CurrentMenuOption = CurrentMenuOption - 1
+      end
+    elseif e[2] == keys.down then
+      if CurrentMenuOption == #menuItems then
+        CurrentMenuOption = 1
+      else
+        CurrentMenuOption = CurrentMenuOption + 1
+      end
+    elseif e[2] == keys.enter then
+      if menuItems[CurrentMenuOption] then
+        pcall(menuItems[CurrentMenuOption].fFunction)
+      end
+    end
+  end
+end
