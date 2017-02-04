@@ -1,0 +1,183 @@
+--Codename Reloaded Main API/Driver
+--Written by Gonow32 for use on the Codename Reloaded console
+
+local DefaultConfigurationFile = {
+  bDevelopmentSystem = true,
+  sBackground = "/background",
+  nMainColour = colours.grey,
+}
+
+local CurrentGame = ""
+local RunningGame = false
+local DisplayModes = {
+  ComputerMode = 1,
+  MonitorMode = 2,
+  MonochromeMode = 3,
+  MonochromeMonitorMode = 4,
+}
+local CurrentDisplayMode = 1
+
+local function clearScr()
+  term.clear()
+  term.setCursorPos(1, 1)
+end
+
+local function printCentered(string, y)
+  local w, h = term.getSize()
+  local x = (w/2)-(#string/2)
+  term.setCursorPos(x, y)
+  term.write(string)
+end
+
+function SystemVersion()
+  return "Alpha 1"
+end
+
+function SystemLabel()
+  return "Codename Reloaded"
+end
+
+function GetConfigurationFile()
+  if not fs.exists("/config") then
+    return DefaultConfigurationFile
+  else
+    local ok, returned = pcall(dofile, "/config")
+    if ok then
+      return returned
+    else
+      return DefaultConfigurationFile
+    end
+  end
+end
+
+function SetRunningGame(game)
+  if not RunningGame then
+    RunningGame = true
+    CurrentGame = game
+    return true
+  else
+    return false, "Game already running"
+  end
+end
+
+function GetRunningGame()
+  if RunningGame then
+    return true, CurrentGame
+  else
+    return false
+  end
+end
+
+function GameExit()
+  if RunningGame then
+    RunningGame = false
+    CurrentGame = ""
+    return true
+  else
+    return false
+  end
+end
+
+function GetDisplayModeList()
+  return {
+    ComputerMode = 1,
+    MonitorMode = 2,
+    MonochromeMode = 3,
+    MonochromeMonitorMode = 4,
+  }
+end
+
+function GetDisplayMode()
+  return CurrentDisplayType
+end
+
+function ColourToMonochromeWrapper()
+  term.isColor = function()
+    return true
+  end
+  term.isColour = term.isColor
+  
+  oldBackColour = term.setBackgroundColour
+  
+  term.setBackgroundColor = function(colour)
+    if colour == colours.white then
+      oldBackColour(colour)
+    else
+      oldBackColour(colours.black)
+    end
+  end
+  
+  term.setBackgroundColour = term.setBackgroundColor
+
+  oldTextColour = term.setTextColour
+  
+  term.setTextColor = function(colour)
+    if colour == colours.black then
+      oldTextColour(colour)
+    else
+      oldTextColour(colours.white)
+    end
+  end
+end
+
+--Auto-configuration should only be used outside games
+function AutoConfigureDisplay()
+  local mon = peripheral.find("monitor")
+  if mon then
+    term.setBackgroundColour(colours.black)
+    term.setTextColour(colours.white)
+    clearScr()
+    printCentered("Would you like to use your monitor?", 2)
+    local currentOption = 1
+    local key
+    local w, h = term.getSize()
+    repeat
+      term.setCursorPos(2, h-1)
+      if currentOption == 1 then
+        term.write("[ Yes ]")
+      else
+        term.write("  Yes  ")
+      end
+      term.setCursorPos((w-6)-1, h-1)
+      if currentOption == 2 then
+        term.write("[ No ]")
+      else
+        term.write("  No  ")
+      end
+      local e = {os.pullEvent()}
+      if e[1] == "key" then
+        key = e[2]
+        if key == keys.left then
+          if currentOption == 1 then
+            currentOption = 2
+          else
+            currentOption = 1
+          end
+        elseif key == keys.right then
+          if currentOption == 2 then
+            currentOption = 1
+          else
+            currentOption = 2
+          end
+        end
+      end
+    until key == keys.enter
+    if currentOption == 1 then
+      if mon.isColour() then
+        CurrentDisplayType = DisplayModes.MonitorMode
+        term.redirect(mon)
+      else
+        CurrentDisplayType = DisplayModes.MonochromeMonitorMode
+        term.redirect(mon)
+        ColourToMonochromeWrapper()
+      end
+    end
+  else
+    if term.isColour() then
+      CurrentDisplayType = DisplayModes.ComputerMode
+    else
+      CurrentDisplayType = DisplayModes.MonochromeMode
+      ColourToMonochromeWrapper()
+    end
+  end
+end
