@@ -1,0 +1,41 @@
+--Codename Reloaded startup
+--Written by Gonow32
+local w, h = term.getSize()
+local clickEvent = "mouse_click"
+
+function clearScr()
+  term.clear()
+  term.setCursorPos(1,1)
+end
+
+function printCentered(string, y)
+  local x = (w/2)-(#string/2)
+  term.setCursorPos(x, y)
+  term.write(string)
+end
+
+function MainSystem()
+  term.setBackgroundColour(colours.grey)
+  term.setTextColour(colours.white)
+  clearScr()
+  printCentered("Welcome to "..Reloaded.SystemLabel()..".", 2)
+  printCentered("The revolution reloaded.", 3)
+  sleep(2)
+  term.setBackgroundColour(colours.black)
+  term.setTextColour(colours.white)
+  clearScr()
+  local ok, err = pcall(shell.run, "/gui")
+  if not ok then
+    printError(err)
+  end
+end
+
+if fs.isDir("/apis") then
+  for i,v in pairs(fs.list("/apis")) do
+    os.loadAPI("/apis/"..v)
+  end
+  if Reloaded then
+    Reloaded.AutoConfigureDisplay()
+    MainSystem()
+  end
+end
