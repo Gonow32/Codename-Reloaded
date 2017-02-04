@@ -1,0 +1,4 @@
+return {
+  sName = "Shutdown",
+  fFunction = os.shutdown,
+}
