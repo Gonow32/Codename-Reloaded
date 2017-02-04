@@ -1,0 +1,4 @@
+return {
+  sName = "Reboot",
+  fFunction = os.reboot,
+}
