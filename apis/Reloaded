@@ -30,7 +30,7 @@ local function printCentered(string, y)
 end
 
 function SystemVersion()
-  return "Alpha 1"
+  return "Alpha 1 Build 1"
 end
 
 function SystemLabel()
