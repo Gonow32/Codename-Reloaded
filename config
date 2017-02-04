@@ -1,0 +1,5 @@
+return {
+  bDeveloperSystem = true,
+  sBackground = "/background",
+  nMainColour = colours.grey,
+}
